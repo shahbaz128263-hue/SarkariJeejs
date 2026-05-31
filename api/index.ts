@@ -265,6 +265,7 @@ router.post("/jobs/generate", async (req, res) => {
 });
 
 app.use("/api", router);
+app.use("/", router);
 
 app.get("/robots.txt", (req, res) => {
   const protocol = req.headers["x-forwarded-proto"] || req.protocol;
