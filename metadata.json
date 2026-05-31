@@ -1,0 +1,8 @@
+{
+  "name": "SarkariJeeja",
+  "description": "AI-powered Sarkari Job website for generating and publishing government job notifications.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
