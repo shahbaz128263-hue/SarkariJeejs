@@ -151,14 +151,22 @@ export function JobDetail() {
       </div>
 
       {/* Tailwind Typography config for clean, modern tables */}
-      <div className="prose prose-blue max-w-none dark:prose-invert
+      <div className="prose prose-blue max-w-none break-words dark:prose-invert
           prose-headings:text-indigo-900 dark:prose-headings:text-indigo-400 prose-headings:font-bold prose-h2:text-2xl prose-h2:border-b prose-h2:border-indigo-100 dark:prose-h2:border-slate-700 prose-h2:pb-2
-          prose-table:border-collapse prose-table:w-full prose-table:bg-white dark:prose-table:bg-slate-800 prose-table:rounded-lg prose-table:overflow-hidden prose-table:shadow-sm prose-table:border prose-table:border-gray-200 dark:prose-table:border-slate-700
+          prose-table:border-collapse prose-table:w-full prose-table:bg-white dark:prose-table:bg-slate-800 prose-table:rounded-lg prose-table:shadow-sm prose-table:border prose-table:border-gray-200 dark:prose-table:border-slate-700
           prose-th:bg-slate-50 dark:prose-th:bg-slate-800/50 prose-th:text-slate-700 dark:prose-th:text-slate-300 prose-th:font-semibold prose-th:py-3 prose-th:px-4 prose-th:border-b prose-th:border-gray-200 dark:prose-th:border-slate-700
           prose-td:py-3 prose-td:px-4 prose-td:border-b prose-td:border-gray-100 dark:prose-td:border-slate-700 prose-td:text-gray-700 dark:prose-td:text-gray-300
           prose-a:text-indigo-600 dark:prose-a:text-indigo-400 prose-a:font-medium hover:prose-a:text-indigo-800 dark:hover:prose-a:text-indigo-300
       ">
-        <Markdown>
+        <Markdown
+          components={{
+            table: ({ node, ...props }) => (
+              <div className="overflow-x-auto w-full my-6 rounded-lg border border-gray-200 dark:border-slate-700">
+                <table className="!m-0 !border-0" {...props} />
+              </div>
+            )
+          }}
+        >
           {job.contentMarkdown}
         </Markdown>
       </div>

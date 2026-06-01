@@ -246,18 +246,25 @@ router.post("/jobs/generate", async (req, res) => {
       Extracted Page Text (if available):
       ${pageText}
       
-      Generate a comprehensive, SEO-optimized article in Markdown format. Use Markdown Tables for all structured data to maximize rich snippet opportunities and readability:
-      1. Main Heading (Post Name & Brief Info).
-      2. Important Dates (Table).
-      3. Application Fee (Table).
-      4. Age Limit (Table).
-      5. Vacancy Details & Eligibility (Table).
-      6. Selection Process
-      7. How to Fill the Online Form (Bullet points).
-      8. Important Links (Table with Apply Online, Download Notification).
-      9. FAQ (3-4 questions).
+      Generate a comprehensive, SEO-optimized article in Markdown format. Use standard, clean Markdown Tables for all structured data to maximize rich snippet opportunities without generating excessive dashes or horizontal lines.
       
-      CRITICAL LINKING RULES: ONLY external links permitted are to Official Notification URL.
+      Structure the post EXACTLY like this:
+      1. Headings: Use H2 (##) and H3 (###) for structure. DO NOT use horizontal rules or dividers like \`---\` or \`***\`.
+      2. Important Dates (Clean Table).
+      3. Application Fee (Clean Table).
+      4. Age Limit (Clean Table).
+      5. Vacancy Details & Eligibility (Clean Table).
+      6. Selection Process (Bullet points or paragraph).
+      7. How to Fill the Online Form (Bullet points).
+      8. Important Links (Clean Table).
+      9. FAQ (3-4 concise questions).
+      
+      CRITICAL FORMATTING RULES:
+      - NEVER use horizontal lines/rules (\`---\`, \`___\`, \`***\`).
+      - Keep table formatting minimal. Do not add decorative dashed lines outside of the necessary table header separator.
+      - Make the content highly engaging and authoritative, written by an expert.
+      
+      CRITICAL LINKING RULES: ONLY external links permitted are to the Official Notification URL.
       
       Also extract key metadata for the UI and SEO.
       - Broad Category (MUST be exactly one of: "Latest Jobs", "Admit Card", "Result", "Answer Key", "Syllabus", "Admission", "Scholarship", "Mock Test", "State Govt"). Infer this based on what the notification is about. Default to "Latest Jobs".
