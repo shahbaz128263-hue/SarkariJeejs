@@ -14,7 +14,7 @@ const DATA_FILE = process.env.VERCEL ? VERCEL_DB : LOCAL_DB;
 
 // Initialize Supabase Client (if keys are provided)
 const supabaseUrl = process.env.SUPABASE_URL || "";
-const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || "";
 const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
 
 interface Job {
