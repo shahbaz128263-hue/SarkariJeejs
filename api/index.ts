@@ -279,16 +279,31 @@ router.post("/jobs/generate", async (req, res) => {
       required: ["title", "metaTitle", "metaDescription", "category", "contentMarkdown", "summary", "shortEligibility", "totalVacancies", "lastDate"],
     };
 
-    const aiResponse = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: responseSchema,
+    let aiResponse;
+    let retries = 3;
+    let attempt = 0;
+    while (attempt < retries) {
+      try {
+        aiResponse = await ai.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: prompt,
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: responseSchema,
+          }
+        });
+        break; // Success, exit loop
+      } catch (err: any) {
+        attempt++;
+        if (attempt >= retries || (err.status !== 503 && err.status !== 429)) {
+          throw err;
+        }
+        console.warn(`Gemini API error (Status ${err.status}). Retrying ${attempt}/${retries} in ${attempt * 2}s...`);
+        await new Promise(resolve => setTimeout(resolve, attempt * 2000));
       }
-    });
+    }
     
-    if (!aiResponse.text) {
+    if (!aiResponse || !aiResponse.text) {
       throw new Error("Failed to generate content");
     }
     
@@ -321,7 +336,15 @@ router.post("/jobs/generate", async (req, res) => {
     res.json(newJob);
   } catch (error: any) {
     console.error("Error generating job:", error);
-    res.status(500).json({ error: error.message || "Failed to generate job" });
+    let errorMessage = error.message || "Failed to generate job";
+    if (error.status === 503) {
+      errorMessage = "Google's AI model is currently experiencing high demand. Please wait a moment and try clicking Generate again.";
+    } else if (error.status === 429) {
+      errorMessage = "Rate limit exceeded. Please wait a minute and try again.";
+    } else if (error.message?.includes("503")) {
+        errorMessage = "Google's AI model is temporarily overloaded. Please try again in a few seconds.";
+    }
+    res.status(500).json({ error: errorMessage });
   }
 });
 
