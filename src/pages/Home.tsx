@@ -223,14 +223,14 @@ export function Home() {
                   {job.summary}
                 </p>
 
-                <div className="space-y-3 mt-auto border-t border-gray-100 dark:border-slate-700 pt-4">
-                  <div className="flex items-center text-sm text-gray-600 dark:text-slate-300">
-                    <GraduationCap className="h-4 w-4 mr-2.5 text-indigo-400" />
-                    <span className="truncate">{job.shortEligibility || "Not specified"}</span>
+                <div className="space-y-3 mt-auto border-t border-gray-100 dark:border-slate-700 pt-4 overflow-hidden">
+                  <div className="flex items-center text-sm text-gray-600 dark:text-slate-300 min-w-0">
+                    <GraduationCap className="h-4 w-4 mr-2.5 text-indigo-400 shrink-0" />
+                    <span className="truncate min-w-0 flex-1">{job.shortEligibility || "Not specified"}</span>
                   </div>
-                  <div className="flex items-center text-sm text-gray-600 dark:text-slate-300">
-                    <Users className="h-4 w-4 mr-2.5 text-indigo-400" />
-                    <span>{job.totalVacancies || "Not specified"} Vacancies</span>
+                  <div className="flex items-center text-sm text-gray-600 dark:text-slate-300 min-w-0">
+                    <Users className="h-4 w-4 mr-2.5 text-indigo-400 shrink-0" />
+                    <span className="truncate min-w-0 flex-1">{job.totalVacancies || "Not specified"} Vacancies</span>
                   </div>
                   <div className="flex items-center text-sm font-medium flex-wrap gap-2">
                     <div className="flex items-center">

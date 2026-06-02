@@ -51,14 +51,14 @@ export function RelatedJobs({ category, currentJobId }: { category: string, curr
                   {job.title}
                 </h4>
                 
-                <div className="space-y-2 mt-4 pt-3 border-t border-gray-100 dark:border-slate-700">
-                  <div className="flex items-center text-xs text-gray-600 dark:text-slate-300">
-                    <GraduationCap className="h-3.5 w-3.5 mr-2 text-indigo-400" />
-                    <span className="truncate">{job.shortEligibility || "Not specified"}</span>
+                <div className="space-y-2 mt-4 pt-3 border-t border-gray-100 dark:border-slate-700 overflow-hidden">
+                  <div className="flex items-center text-xs text-gray-600 dark:text-slate-300 min-w-0">
+                    <GraduationCap className="h-3.5 w-3.5 mr-2 text-indigo-400 shrink-0" />
+                    <span className="truncate min-w-0 flex-1">{job.shortEligibility || "Not specified"}</span>
                   </div>
-                  <div className="flex items-center text-xs text-gray-600 dark:text-slate-300">
-                    <Users className="h-3.5 w-3.5 mr-2 text-indigo-400" />
-                    <span>{job.totalVacancies || "Not specified"} Vacancies</span>
+                  <div className="flex items-center text-xs text-gray-600 dark:text-slate-300 min-w-0">
+                    <Users className="h-3.5 w-3.5 mr-2 text-indigo-400 shrink-0" />
+                    <span className="truncate min-w-0 flex-1">{job.totalVacancies || "Not specified"} Vacancies</span>
                   </div>
                   <div className="flex items-center justify-between text-xs pt-1">
                     <div className="flex items-center">
