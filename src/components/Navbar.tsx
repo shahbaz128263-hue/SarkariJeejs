@@ -140,44 +140,51 @@ export function Navbar() {
           </button>
         </div>
         <div className="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-2">
-          {categories.filter(c => !c.parentId).map(link => {
-            const isActive = link.cat === null 
-              ? !searchParams.get('category') 
-              : searchParams.get('category') === link.cat;
-            
+          {categories.filter(c => !c.parentId && c.cat === null).map(link => {
+            const isActive = !searchParams.get('category');
             return (
-              <React.Fragment key={link.id || link.name}>
-                <Link 
-                  to={link.path} 
-                  onClick={closeDrawer} 
-                  className={`block px-3 py-2 rounded-md font-semibold transition-colors ${
-                    isActive
-                      ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300'
-                      : 'text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400'
-                  }`}
-                >
-                  {link.name}
-                </Link>
-                {categories.filter(sub => sub.parentId === link.id).map(subLink => {
-                  const isSubActive = searchParams.get('category') === subLink.cat;
-                  return (
-                    <Link
-                      key={subLink.id || subLink.name}
-                      to={subLink.path}
-                      onClick={closeDrawer}
-                      className={`block px-3 py-2 ml-4 pl-4 border-l-2 text-sm font-medium transition-colors ${
-                        isSubActive
-                          ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 rounded-r-md'
-                          : 'border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-400 hover:border-indigo-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-r-md'
-                      }`}
-                    >
-                      {subLink.name}
-                    </Link>
-                  );
-                })}
-              </React.Fragment>
+              <Link 
+                key="home"
+                to="/"
+                onClick={closeDrawer}
+                className={`block px-3 py-2 rounded-md font-semibold transition-colors ${isActive ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-slate-800'}`}
+              >
+                {link.name}
+              </Link>
             );
           })}
+          
+          {(function renderMobileCategories(parentId: string | undefined = undefined, depth: number = 0): React.ReactNode {
+            if (depth > 4) return null;
+            const children = categories.filter(c => c.parentId === parentId && c.cat !== null);
+            if (children.length === 0) return null;
+
+            return (
+              <div className={depth > 0 ? "ml-4 pl-4 border-l-2 border-gray-200 dark:border-slate-700 space-y-1" : "space-y-1 mt-1"}>
+                {children.map(link => {
+                  const isActive = searchParams.get('category') === link.cat;
+                  return (
+                    <React.Fragment key={link.id || link.name}>
+                      <Link 
+                        to={link.path} 
+                        onClick={closeDrawer} 
+                        className={`block px-3 py-2 rounded-r-md transition-colors ${
+                          depth === 0 ? 'font-semibold' : 'text-sm font-medium'
+                        } ${
+                          isActive
+                            ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border-l-2 border-indigo-500 -ml-[18px] pl-[26px]'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400'
+                        }`}
+                      >
+                        {link.name}
+                      </Link>
+                      {renderMobileCategories(link.id, depth + 1)}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       </div>
     </header>

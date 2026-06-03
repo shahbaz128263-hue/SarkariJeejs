@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, PlusCircle, Lock, LogOut, LayoutDashboard, FileText, Settings, BookOpen, Bot, Edit3, Grid, Menu, X } from 'lucide-react';
+import { Loader2, PlusCircle, Lock, LogOut, LayoutDashboard, FileText, Settings, BookOpen, Bot, Edit3, Grid, Menu, X, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { AdminMockTests } from '../components/AdminMockTests';
 
 export function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -193,6 +194,43 @@ export function Admin() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const renderCategoryOptions = (parentId: string | undefined = undefined, depth: number = 0): React.ReactNode[] => {
+    if (depth > 4) return [];
+    let options: React.ReactNode[] = [];
+    const children = categories.filter(c => c.parentId === parentId);
+    for (const cat of children) {
+      options.push(<option key={cat.id} value={cat.id}>{"\u00A0\u00A0".repeat(depth)}{cat.name}</option>);
+      options = options.concat(renderCategoryOptions(cat.id, depth + 1));
+    }
+    return options;
+  };
+
+  const renderCategoryRows = (parentId: string | undefined = undefined, depth: number = 0): React.ReactNode[] => {
+    if (depth > 4) return [];
+    let rows: React.ReactNode[] = [];
+    const children = categories.filter(c => c.parentId === parentId);
+    for (const cat of children) {
+      rows.push(
+        <tr key={cat.id} className={depth === 0 ? "bg-white dark:bg-slate-800" : "bg-gray-50 dark:bg-slate-800/50"}>
+          <td className={`px-6 py-${depth === 0 ? '4' : '3'} whitespace-nowrap text-sm font-medium ${depth === 0 ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400 font-normal'} flex items-center`} style={{ paddingLeft: `${1.5 + depth * 2}rem` }}>
+            {depth > 0 && <div className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 mr-2 shrink-0"></div>}
+            {cat.name}
+          </td>
+          <td className={`px-6 py-${depth === 0 ? '4' : '3'} whitespace-nowrap text-right text-sm font-medium`}>
+            <button 
+              onClick={() => handleDeleteCategory(cat.id, cat.name)}
+              className="text-rose-600 hover:text-rose-900 dark:text-rose-400 dark:hover:text-rose-300 transition-colors"
+            >
+              Delete
+            </button>
+          </td>
+        </tr>
+      );
+      rows = rows.concat(renderCategoryRows(cat.id, depth + 1));
+    }
+    return rows;
   };
 
   if (!isAuthenticated) {
@@ -536,57 +574,7 @@ export function Admin() {
           )}
 
           {activeTab === 'mock_test' && (
-            <div className="animate-in fade-in duration-300">
-              <div className="mb-8">
-                <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Mock Test Creator</h2>
-                <p className="mt-2 text-sm text-gray-600 dark:text-slate-400">Generate fully structured mock tests from text questions or syllabus details.</p>
-              </div>
-              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
-                <div className="p-6 border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/50">
-                  <h2 className="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2">
-                    <BookOpen className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                    Generate Mock Test
-                  </h2>
-                </div>
-                <form onSubmit={(e) => { e.preventDefault(); setUrl(''); handleGenerate(e, `MUST BE CATEGORIZED EXACTLY AS "${selectedCategory || 'Mock Test'}". Format the content strictly as an MCQ Mock Test with Q&A.`); }} className="p-6 space-y-6">
-                  {error && (
-                    <div className="p-4 rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-400">
-                      {error}
-                    </div>
-                  )}
-                  {success && (
-                    <div className="p-4 rounded-md bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-sm text-green-700 dark:text-green-400">
-                      {success}
-                    </div>
-                  )}
-                  <div>
-                    <label htmlFor="rawText" className="block text-sm font-bold text-gray-700 dark:text-gray-300">Test Questions & Details</label>
-                    <textarea
-                      id="rawText" rows={8} value={rawText} onChange={(e) => { setRawText(e.target.value); }}
-                      className="mt-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-slate-600 rounded-md border p-3 bg-white dark:bg-slate-700 text-gray-900 dark:text-white font-mono"
-                      placeholder="Paste questions here. AI will structure it perfectly as a Mock Test..." required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">Select Mock Test Category</label>
-                    <select
-                      value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                      required
-                      className="mt-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-slate-600 rounded-md border p-3 bg-white dark:bg-slate-700 text-gray-900 dark:text-white mb-4"
-                    >
-                      <option value="">Select a category...</option>
-                      {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="pt-2 flex justify-end">
-                    <button type="submit" disabled={loading || !rawText || !selectedCategory} className="inline-flex items-center px-6 py-3 text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg font-bold">
-                       {loading ? <><Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" /> Processing...</> : 'Publish Mock Test'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
+            <AdminMockTests />
           )}
 
           {activeTab === 'manage_jobs' && (
@@ -742,7 +730,7 @@ export function Admin() {
                          className="flex-1 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-slate-600 rounded-md border p-3 bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                        >
                          <option value="">No Parent (Top Level)</option>
-                         {categories.filter(c => !c.parentId).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                         {renderCategoryOptions(undefined, 0)}
                        </select>
                        <button type="submit" className="px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition whitespace-nowrap">Add Category</button>
                     </form>
@@ -756,37 +744,7 @@ export function Admin() {
                           </tr>
                         </thead>
                         <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
-                          {categories.filter(c => !c.parentId).map((cat) => (
-                            <React.Fragment key={cat.id}>
-                              <tr>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{cat.name}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                  <button 
-                                    onClick={() => handleDeleteCategory(cat.id, cat.name)}
-                                    className="text-rose-600 hover:text-rose-900 dark:text-rose-400 dark:hover:text-rose-300 transition-colors"
-                                  >
-                                    Delete
-                                  </button>
-                                </td>
-                              </tr>
-                              {categories.filter(sub => sub.parentId === cat.id).map((subCat) => (
-                                <tr key={subCat.id} className="bg-gray-50 dark:bg-slate-800/50">
-                                  <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400 pl-12 flex items-center">
-                                    <div className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 mr-2 -ml-4"></div>
-                                    {subCat.name}
-                                  </td>
-                                  <td className="px-6 py-3 whitespace-nowrap text-right text-sm font-medium">
-                                    <button 
-                                      onClick={() => handleDeleteCategory(subCat.id, subCat.name)}
-                                      className="text-rose-600 hover:text-rose-900 dark:text-rose-400 dark:hover:text-rose-300 transition-colors"
-                                    >
-                                      Delete
-                                    </button>
-                                  </td>
-                                </tr>
-                              ))}
-                            </React.Fragment>
-                          ))}
+                          {renderCategoryRows(undefined, 0)}
                           {categories.length === 0 && (
                             <tr><td colSpan={2} className="px-6 py-4 text-center text-sm text-gray-500">No categories found.</td></tr>
                           )}

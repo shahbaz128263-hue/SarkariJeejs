@@ -11,6 +11,7 @@ import { Admin } from './pages/Admin';
 import { AboutUs } from './pages/AboutUs';
 import { ContactUs } from './pages/ContactUs';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { MockTestPlayer } from './pages/MockTestPlayer';
 
 function PublicLayout() {
   return (
@@ -42,6 +43,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/admin" element={<Admin />} />
+      <Route path="/mock-test/:id" element={<MockTestPlayer />} />
       <Route element={<PublicLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/job/:id" element={<JobDetail />} />

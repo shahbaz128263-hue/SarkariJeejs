@@ -33,16 +33,59 @@ interface Job {
   sourceUrl?: string;
 }
 
-let db: { jobs: Job[], categories: { id: string, name: string, parentId?: string }[] } = { jobs: [], categories: [
-  { id: '1', name: 'Latest Jobs' },
-  { id: '2', name: 'State Govt' },
-  { id: '3', name: 'Result' },
-  { id: '4', name: 'Admit Card' },
-  { id: '5', name: 'Answer Key' },
-  { id: '6', name: 'Syllabus' },
-  { id: '7', name: 'Admission' },
-  { id: '8', name: 'Mock Test' }
-] };
+export interface MockTest {
+  id: string;
+  title: string;
+  durationMinutes: number;
+  totalMarks: number;
+  positiveMarks: number;
+  negativeMarks: number;
+  isSectionsEnabled: boolean;
+  published: boolean;
+  createdAt: string;
+}
+
+export interface MockTestSection {
+  id: string;
+  testId: string;
+  title: string;
+  order: number;
+}
+
+export interface MockTestQuestion {
+  id: string;
+  testId: string;
+  sectionId?: string;
+  type: 'MCQ';
+  contentMarkdown: string;
+  options: { id: string; contentMarkdown: string }[];
+  correctOptionId: string;
+  explanationMarkdown?: string;
+  order: number;
+}
+
+let db: { 
+  jobs: Job[], 
+  categories: { id: string, name: string, parentId?: string }[],
+  mockTests: MockTest[],
+  mockTestSections: MockTestSection[],
+  mockTestQuestions: MockTestQuestion[]
+} = { 
+  jobs: [], 
+  categories: [
+    { id: '1', name: 'Latest Jobs' },
+    { id: '2', name: 'State Govt' },
+    { id: '3', name: 'Result' },
+    { id: '4', name: 'Admit Card' },
+    { id: '5', name: 'Answer Key' },
+    { id: '6', name: 'Syllabus' },
+    { id: '7', name: 'Admission' },
+    { id: '8', name: 'Mock Test' }
+  ],
+  mockTests: [],
+  mockTestSections: [],
+  mockTestQuestions: []
+};
 
 const saveDb = () => {
   if (supabase) return; // Supabase handles its own storage
@@ -63,6 +106,10 @@ const initDb = () => {
     
     if (fs.existsSync(DATA_FILE)) {
       db = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+      if (!db.mockTests) db.mockTests = [];
+      if (!db.mockTestSections) db.mockTestSections = [];
+      if (!db.mockTestQuestions) db.mockTestQuestions = [];
+      
       if (!db.categories) {
         db.categories = [
           { id: '1', name: 'Latest Jobs' },
@@ -195,6 +242,151 @@ router.delete("/categories/:id", async (req, res) => {
   }
 
   db.categories = db.categories.filter(c => c.id !== req.params.id);
+  saveDb();
+  res.json({ success: true });
+});
+
+router.get("/mock-tests", async (req, res) => {
+  if (supabase) {
+    const { data, error } = await supabase.from('mockTests').select('*').order('createdAt', { ascending: false });
+    if (!error) return res.json(data);
+  }
+  return res.json(db.mockTests || []);
+});
+
+router.get("/mock-tests/:id", async (req, res) => {
+  if (supabase) {
+    const { data, error } = await supabase.from('mockTests').select('*').eq('id', req.params.id).single();
+    if (!error) return res.json(data);
+  }
+  const test = db.mockTests.find(t => t.id === req.params.id);
+  if (!test) return res.status(404).json({ error: "Test not found" });
+  res.json(test);
+});
+
+router.post("/mock-tests", async (req, res) => {
+  if (req.headers.authorization !== 'Bearer admin_token_123') return res.status(401).json({ error: "Unauthorized" });
+  const newTest = { id: Math.random().toString(36).substr(2, 6), createdAt: new Date().toISOString(), ...req.body };
+  if (supabase) {
+    const { data, error } = await supabase.from('mockTests').insert([newTest]).select().single();
+    if (!error) return res.json(data);
+  }
+  db.mockTests.push(newTest);
+  saveDb();
+  res.json(newTest);
+});
+
+router.put("/mock-tests/:id", async (req, res) => {
+  if (req.headers.authorization !== 'Bearer admin_token_123') return res.status(401).json({ error: "Unauthorized" });
+  if (supabase) {
+    const { data, error } = await supabase.from('mockTests').update(req.body).eq('id', req.params.id).select().single();
+    if (!error) return res.json(data);
+  }
+  const idx = db.mockTests.findIndex(t => t.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: "Test not found" });
+  db.mockTests[idx] = { ...db.mockTests[idx], ...req.body };
+  saveDb();
+  res.json(db.mockTests[idx]);
+});
+
+router.delete("/mock-tests/:id", async (req, res) => {
+  if (req.headers.authorization !== 'Bearer admin_token_123') return res.status(401).json({ error: "Unauthorized" });
+  if (supabase) {
+    const { error } = await supabase.from('mockTests').delete().eq('id', req.params.id);
+    if (!error) return res.json({ success: true });
+  }
+  db.mockTests = db.mockTests.filter(t => t.id !== req.params.id);
+  db.mockTestSections = db.mockTestSections.filter(s => s.testId !== req.params.id);
+  db.mockTestQuestions = db.mockTestQuestions.filter(q => q.testId !== req.params.id);
+  saveDb();
+  res.json({ success: true });
+});
+
+router.get("/mock-tests/:id/sections", async (req, res) => {
+  if (supabase) {
+    const { data, error } = await supabase.from('mockTestSections').select('*').eq('testId', req.params.id).order('order', { ascending: true });
+    if (!error) return res.json(data);
+  }
+  res.json(db.mockTestSections.filter(s => s.testId === req.params.id).sort((a, b) => a.order - b.order));
+});
+
+router.post("/mock-tests/:id/sections", async (req, res) => {
+  if (req.headers.authorization !== 'Bearer admin_token_123') return res.status(401).json({ error: "Unauthorized" });
+  const newSection = { id: Math.random().toString(36).substr(2, 6), testId: req.params.id, ...req.body };
+  if (supabase) {
+    const { data, error } = await supabase.from('mockTestSections').insert([newSection]).select().single();
+    if (!error) return res.json(data);
+  }
+  db.mockTestSections.push(newSection);
+  saveDb();
+  res.json(newSection);
+});
+
+router.put("/mock-tests/:id/sections/:sectionId", async (req, res) => {
+  if (req.headers.authorization !== 'Bearer admin_token_123') return res.status(401).json({ error: "Unauthorized" });
+  if (supabase) {
+    const { data, error } = await supabase.from('mockTestSections').update(req.body).eq('id', req.params.sectionId).select().single();
+    if (!error) return res.json(data);
+  }
+  const idx = db.mockTestSections.findIndex(s => s.id === req.params.sectionId);
+  if (idx === -1) return res.status(404).json({ error: "Section not found" });
+  db.mockTestSections[idx] = { ...db.mockTestSections[idx], ...req.body };
+  saveDb();
+  res.json(db.mockTestSections[idx]);
+});
+
+router.delete("/mock-tests/:id/sections/:sectionId", async (req, res) => {
+  if (req.headers.authorization !== 'Bearer admin_token_123') return res.status(401).json({ error: "Unauthorized" });
+  if (supabase) {
+    const { error } = await supabase.from('mockTestSections').delete().eq('id', req.params.sectionId);
+    if (!error) return res.json({ success: true });
+  }
+  db.mockTestSections = db.mockTestSections.filter(s => s.id !== req.params.sectionId);
+  db.mockTestQuestions = db.mockTestQuestions.filter(q => q.sectionId !== req.params.sectionId);
+  saveDb();
+  res.json({ success: true });
+});
+
+router.get("/mock-tests/:id/questions", async (req, res) => {
+  if (supabase) {
+    const { data, error } = await supabase.from('mockTestQuestions').select('*').eq('testId', req.params.id).order('order', { ascending: true });
+    if (!error) return res.json(data);
+  }
+  res.json(db.mockTestQuestions.filter(q => q.testId === req.params.id).sort((a, b) => a.order - b.order));
+});
+
+router.post("/mock-tests/:id/questions", async (req, res) => {
+  if (req.headers.authorization !== 'Bearer admin_token_123') return res.status(401).json({ error: "Unauthorized" });
+  const newQ = { id: Math.random().toString(36).substr(2, 6), testId: req.params.id, ...req.body };
+  if (supabase) {
+    const { data, error } = await supabase.from('mockTestQuestions').insert([newQ]).select().single();
+    if (!error) return res.json(data);
+  }
+  db.mockTestQuestions.push(newQ);
+  saveDb();
+  res.json(newQ);
+});
+
+router.put("/mock-tests/:id/questions/:questionId", async (req, res) => {
+  if (req.headers.authorization !== 'Bearer admin_token_123') return res.status(401).json({ error: "Unauthorized" });
+  if (supabase) {
+    const { data, error } = await supabase.from('mockTestQuestions').update(req.body).eq('id', req.params.questionId).select().single();
+    if (!error) return res.json(data);
+  }
+  const idx = db.mockTestQuestions.findIndex(q => q.id === req.params.questionId);
+  if (idx === -1) return res.status(404).json({ error: "Question not found" });
+  db.mockTestQuestions[idx] = { ...db.mockTestQuestions[idx], ...req.body };
+  saveDb();
+  res.json(db.mockTestQuestions[idx]);
+});
+
+router.delete("/mock-tests/:id/questions/:questionId", async (req, res) => {
+  if (req.headers.authorization !== 'Bearer admin_token_123') return res.status(401).json({ error: "Unauthorized" });
+  if (supabase) {
+    const { error } = await supabase.from('mockTestQuestions').delete().eq('id', req.params.questionId);
+    if (!error) return res.json({ success: true });
+  }
+  db.mockTestQuestions = db.mockTestQuestions.filter(q => q.id !== req.params.questionId);
   saveDb();
   res.json({ success: true });
 });
