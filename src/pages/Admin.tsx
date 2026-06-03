@@ -67,7 +67,7 @@ export function Admin() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         },
-        body: JSON.stringify({ name: newCatName.trim(), parentId: newCatParentId || undefined }),
+        body: JSON.stringify({ name: newCatName.trim(), parentId: newCatParentId || null }),
       });
       if (res.ok) {
         setNewCatName('');
@@ -196,10 +196,10 @@ export function Admin() {
     }
   };
 
-  const renderCategoryOptions = (parentId: string | undefined = undefined, depth: number = 0): React.ReactNode[] => {
+  const renderCategoryOptions = (parentId: string | null | undefined = undefined, depth: number = 0): React.ReactNode[] => {
     if (depth > 4) return [];
     let options: React.ReactNode[] = [];
-    const children = categories.filter(c => c.parentId === parentId);
+    const children = categories.filter(c => (!c.parentId && !parentId) || c.parentId === parentId);
     for (const cat of children) {
       options.push(<option key={cat.id} value={cat.id}>{"\u00A0\u00A0".repeat(depth)}{cat.name}</option>);
       options = options.concat(renderCategoryOptions(cat.id, depth + 1));
@@ -207,10 +207,10 @@ export function Admin() {
     return options;
   };
 
-  const renderCategoryRows = (parentId: string | undefined = undefined, depth: number = 0): React.ReactNode[] => {
+  const renderCategoryRows = (parentId: string | null | undefined = undefined, depth: number = 0): React.ReactNode[] => {
     if (depth > 4) return [];
     let rows: React.ReactNode[] = [];
-    const children = categories.filter(c => c.parentId === parentId);
+    const children = categories.filter(c => (!c.parentId && !parentId) || c.parentId === parentId);
     for (const cat of children) {
       rows.push(
         <tr key={cat.id} className={depth === 0 ? "bg-white dark:bg-slate-800" : "bg-gray-50 dark:bg-slate-800/50"}>

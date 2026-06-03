@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, ArrowLeft, Settings, Save, Plus, Trash2, Edit3, Type, CheckCircle2, ChevronRight, Wand2 } from 'lucide-react';
+import { Loader2, ArrowLeft, Settings, Save, Plus, Trash2, Edit3, Type, CheckCircle2, ChevronRight, Wand2, FileText } from 'lucide-react';
 import { MockTest, MockTestSection, MockTestQuestion } from '../types';
 import Markdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 import 'katex/dist/katex.min.css';
 
 export function AdminMockTestBuilder({ testId, onBack }: { testId: string, onBack: () => void }) {
@@ -12,6 +13,7 @@ export function AdminMockTestBuilder({ testId, onBack }: { testId: string, onBac
   const [sections, setSections] = useState<MockTestSection[]>([]);
   const [questions, setQuestions] = useState<MockTestQuestion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<any[]>([]);
   
   const [activeTab, setActiveTab] = useState('settings'); // settings, questions
 
@@ -20,6 +22,11 @@ export function AdminMockTestBuilder({ testId, onBack }: { testId: string, onBac
   const [qForm, setQForm] = useState<Partial<MockTestQuestion>>({ options: [{id: '1', contentMarkdown: ''}, {id: '2', contentMarkdown: ''}, {id: '3', contentMarkdown: ''}, {id: '4', contentMarkdown: ''}], correctOptionId: '1' });
   const [aiPrompt, setAiPrompt] = useState("");
 
+  const [isBulkImport, setIsBulkImport] = useState(false);
+  const [bulkText, setBulkText] = useState("");
+  const [bulkPreview, setBulkPreview] = useState<Partial<MockTestQuestion>[]>([]);
+  const [isImporting, setIsImporting] = useState(false);
+
   useEffect(() => {
     fetchTestData();
   }, []);
@@ -27,18 +34,31 @@ export function AdminMockTestBuilder({ testId, onBack }: { testId: string, onBac
   const fetchTestData = async () => {
     setLoading(true);
     try {
-      const [tRes, sRes, qRes] = await Promise.all([
+      const [tRes, sRes, qRes, cRes] = await Promise.all([
         fetch(`/api/mock-tests/${testId}`),
         fetch(`/api/mock-tests/${testId}/sections`),
-        fetch(`/api/mock-tests/${testId}/questions`)
+        fetch(`/api/mock-tests/${testId}/questions`),
+        fetch(`/api/categories`)
       ]);
       setTest(await tRes.json());
       setSections(await sRes.json());
       setQuestions(await qRes.json());
+      setCategories(await cRes.json());
     } catch (e) {
       console.error(e);
     }
     setLoading(false);
+  };
+
+  const renderCategoryOptions = (parentId: string | null | undefined = undefined, depth: number = 0): React.ReactNode[] => {
+    if (depth > 4) return [];
+    let options: React.ReactNode[] = [];
+    const children = categories.filter(c => (!c.parentId && !parentId) || c.parentId === parentId);
+    for (const cat of children) {
+      options.push(<option key={cat.id} value={cat.id}>{"\u00A0\u00A0".repeat(depth)}{cat.name}</option>);
+      options = options.concat(renderCategoryOptions(cat.id, depth + 1));
+    }
+    return options;
   };
 
   const handleUpdateTest = async (e: React.FormEvent) => {
@@ -52,6 +72,104 @@ export function AdminMockTestBuilder({ testId, onBack }: { testId: string, onBac
       });
       alert('Settings saved!');
     } catch {}
+  };
+
+  const handleParseBulk = () => {
+    const parsed: Partial<MockTestQuestion>[] = [];
+    const splitRegex = /(?=^(?:###\s*)?(?:Q\s*|Question\s*|प्रश्न\s*|प्र\.\s*)?\d+(?:[.)\]:-]|\s+|$))/im;
+    const rawBlocks = bulkText.split(splitRegex).map(b => b.trim()).filter(b => b);
+    const blocks = rawBlocks.length > 0 ? rawBlocks : [bulkText.trim()];
+    
+    blocks.forEach(block => {
+      const lines = block.split('\n').map(l => l.trim()).filter(l => l);
+      if(lines.length < 3) return;
+      
+      let qText = "";
+      const options: any[] = [];
+      let answer = "";
+      let explanation = "";
+      
+      let currentCtx = 'q';
+      
+      for (const line of lines) {
+        if (currentCtx === 'q' && !qText) {
+             qText = line.replace(/^(?:###\s*)?(?:Q\s*|Question\s*|प्रश्न\s*|प्र\.\s*)?\d+[.)\]:-]?\s*/i, '');
+             continue;
+        }
+
+        if (/^(?:\*\*)?[A-Ea-e1-5][.)\]]\s*/.test(line)) {
+          currentCtx = 'opt';
+          options.push({ id: (options.length + 1).toString(), contentMarkdown: line.replace(/^(?:\*\*)?[A-Ea-e1-5][.)\]]\s*/, '').replace(/\*\*$/, '') });
+        } else if (/^(?:\*\*)?(?:Ans|Answer|Correct|उत्तर|सही उत्तर)\s*(?:\*\*)?\s*[:=]?/i.test(line)) {
+          currentCtx = 'ans';
+          const cleanLine = line.replace(/\*\*/g, '');
+          const rawAns = cleanLine.replace(/^(?:Ans|Answer|Correct|उत्तर|सही उत्तर)\s*[:=]?\s*/i, '').trim();
+          const match = rawAns.match(/^[A-Da-d1-4]/);
+          if (match) {
+             answer = match[0].toUpperCase();
+          } else {
+             answer = rawAns;
+          }
+        } else if (/^(?:\*\*)?(?:Exp|Explanation|Reason|हल|स्पष्टीकरण)\s*(?:\*\*)?\s*[:=]?/i.test(line)) {
+          currentCtx = 'exp';
+          const cleanLine = line.replace(/\*\*/g, '');
+          explanation = cleanLine.replace(/^(?:Exp|Explanation|Reason|हल|स्पष्टीकरण)\s*[:=]?\s*/i, '').trim();
+        } else {
+          if (currentCtx === 'q') qText += (qText ? '\n' : '') + line;
+          else if (currentCtx === 'opt' && options.length > 0) {
+             options[options.length - 1].contentMarkdown += '\n' + line;
+          }
+          else if (currentCtx === 'exp') explanation += (explanation ? '\n' : '') + line;
+        }
+      }
+      
+      if (options.length > 0) {
+         let correctOptionId = '1';
+         if (answer) {
+             const charCode = answer.charCodeAt(0);
+             if (charCode >= 65 && charCode <= 68) {
+                correctOptionId = (charCode - 64).toString();
+             } else if (charCode >= 49 && charCode <= 52) {
+                correctOptionId = answer;
+             }
+         }
+         
+         parsed.push({
+           contentMarkdown: qText,
+           options: options.slice(0, 4),
+           correctOptionId,
+           explanationMarkdown: explanation
+         });
+      }
+    });
+    
+    setBulkPreview(parsed);
+  };
+
+  const handleImportParsed = async () => {
+    setIsImporting(true);
+    try {
+      let currentOrder = questions.length;
+      for (const q of bulkPreview) {
+        currentOrder++;
+        const payload = { ...q, type: 'MCQ', testId, order: currentOrder };
+        await fetch(`/api/mock-tests/${testId}/questions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
+          body: JSON.stringify(payload)
+        });
+      }
+      await fetchTestData();
+      setIsBulkImport(false);
+      setBulkText("");
+      setBulkPreview([]);
+      alert(`Imported ${bulkPreview.length} questions successfully!`);
+    } catch (e) {
+      console.error(e);
+      alert('Error importing questions.');
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   const handleSaveQuestion = async () => {
@@ -124,6 +242,14 @@ export function AdminMockTestBuilder({ testId, onBack }: { testId: string, onBac
              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Test Title</label>
              <input type="text" value={test.title} onChange={e => setTest({...test, title: e.target.value})} className="w-full rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 ring-indigo-500 outline-none" required />
            </div>
+
+           <div>
+             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category (e.g., Mock Test, UP Police, SSC)</label>
+             <select value={test.categoryId || ''} onChange={e => setTest({...test, categoryId: e.target.value})} className="w-full rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 ring-indigo-500 outline-none" required>
+               <option value="">Select a Category...</option>
+               {renderCategoryOptions(undefined, 0)}
+             </select>
+           </div>
            
            <div className="grid grid-cols-2 gap-4">
              <div>
@@ -157,13 +283,74 @@ export function AdminMockTestBuilder({ testId, onBack }: { testId: string, onBac
 
       {activeTab === 'questions' && (
         <div className="space-y-6">
-          {!isAddingQ ? (
+          {isBulkImport ? (
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
+              <div className="flex justify-between items-center border-b border-gray-100 dark:border-slate-700 pb-4 mb-5">
+                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">Bulk Plain Text Import</h3>
+                 <button onClick={() => { setIsBulkImport(false); setBulkPreview([]); }} className="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm font-medium">Cancel</button>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-slate-400 mb-4">
+                 Format your questions like this: <br/>
+                 <code>Q1. What is the capital of France?</code><br/>
+                 <code>A. London</code><br/>
+                 <code>B. Paris</code><br/>
+                 <code>C. Rome</code><br/>
+                 <code>D. Madrid</code><br/>
+                 <code>Answer: B</code><br/>
+                 <code>Explanation: Paris is the capital.</code>
+              </p>
+              
+              <div className="space-y-6">
+                 <textarea rows={8} value={bulkText} onChange={(e) => setBulkText(e.target.value)} className="w-full rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-3 text-sm text-gray-900 dark:text-gray-100 font-mono focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Paste questions here..." />
+                 <div className="flex justify-between">
+                    <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                      {bulkPreview.length > 0 ? `${bulkPreview.length} Questions Parsed` : 'Paste text and click Preview'}
+                    </div>
+                    <button onClick={handleParseBulk} disabled={!bulkText} className="px-5 py-2.5 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-800 dark:text-white rounded-lg font-medium disabled:opacity-50">
+                       Parse & Preview
+                    </button>
+                 </div>
+
+                 {bulkPreview.length > 0 && (
+                   <div className="mt-8 border-t border-gray-200 dark:border-slate-700 pt-6">
+                     <h4 className="font-bold text-gray-900 dark:text-white mb-4">Preview ({bulkPreview.length} Questions)</h4>
+                     <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                       {bulkPreview.map((q, idx) => (
+                         <div key={idx} className="bg-gray-50 dark:bg-slate-900/50 p-4 rounded-lg border border-gray-200 dark:border-slate-700">
+                           <div className="font-bold text-sm mb-2 text-gray-900 dark:text-white">
+                             Q {idx + 1}. <span className="inline"><Markdown remarkPlugins={[remarkMath, remarkBreaks]} rehypePlugins={[[rehypeKatex, { strict: false }]]}>{(q.contentMarkdown as string) || ""}</Markdown></span>
+                           </div>
+                           <div className="text-sm space-y-1 mb-2 pl-4">
+                             {q.options?.map((o, oidx) => (
+                               <div key={oidx} className={q.correctOptionId === o.id ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-gray-600 dark:text-gray-400'}>
+                                  {String.fromCharCode(65 + oidx)}. {o.contentMarkdown}
+                               </div>
+                             ))}
+                           </div>
+                           {q.explanationMarkdown && <div className="text-xs text-gray-500 dark:text-slate-400 mt-2 p-2 bg-gray-100 dark:bg-slate-800 rounded">Exp: {q.explanationMarkdown}</div>}
+                         </div>
+                       ))}
+                     </div>
+                     <div className="flex justify-end pt-6 mt-4 border-t border-gray-200 dark:border-slate-700">
+                       <button onClick={handleImportParsed} disabled={isImporting} className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold disabled:opacity-50 flex items-center gap-2">
+                         {isImporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                         Import {bulkPreview.length} Questions
+                       </button>
+                     </div>
+                   </div>
+                 )}
+              </div>
+            </div>
+          ) : !isAddingQ ? (
             <>
               <div className="flex gap-4">
                 <button onClick={() => { setQForm({ options: [{id: '1', contentMarkdown: ''}, {id: '2', contentMarkdown: ''}, {id: '3', contentMarkdown: ''}, {id: '4', contentMarkdown: ''}], correctOptionId: '1' }); setIsAddingQ(true); }} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2">
                   <Plus className="w-5 h-5" /> Add Question Manually
                 </button>
                 <div className="flex-1 flex gap-2">
+                  <button onClick={() => { setIsBulkImport(true); setIsAddingQ(false); }} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg flex items-center gap-2">
+                     <FileText className="w-5 h-5" /> Bulk Text Import
+                  </button>
                   <button onClick={() => {
                      const template = `Please generate 5 MCQ questions for [Topic]. Use Markdown for text. For Math formulas use $...$ (inline) or $$...$$ (block). For Chemistry, also use Math formatting with chemical symbols. For each question, provide 4 options and the correct answer explanation.`;
                      navigator.clipboard.writeText(template);
@@ -181,7 +368,7 @@ export function AdminMockTestBuilder({ testId, onBack }: { testId: string, onBac
                        <div className="flex-1">
                           <div className="font-bold text-sm text-gray-500 dark:text-slate-400 mb-2">Q {idx + 1}.</div>
                           <div className="prose dark:prose-invert prose-sm max-w-none">
-                            <Markdown remarkPlugins={[remarkMath, remarkGfm]} rehypePlugins={[rehypeKatex]}>{q.contentMarkdown}</Markdown>
+                            <Markdown remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]} rehypePlugins={[[rehypeKatex, { strict: false }]]}>{q.contentMarkdown || ""}</Markdown>
                           </div>
                        </div>
                        <div className="flex gap-2 shrink-0">

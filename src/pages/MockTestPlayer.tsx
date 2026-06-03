@@ -6,6 +6,7 @@ import Markdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 
 type AnswerMap = Record<string, string>;
@@ -227,13 +228,13 @@ export function MockTestPlayer() {
                    </div>
                  </div>
                  <div className="prose dark:prose-invert prose-sm max-w-none mb-4">
-                   <Markdown remarkPlugins={[remarkMath, remarkGfm]} rehypePlugins={[rehypeKatex]}>{q.contentMarkdown}</Markdown>
+                   <Markdown remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]} rehypePlugins={[[rehypeKatex, { strict: false }]]}>{q.contentMarkdown || ""}</Markdown>
                  </div>
                  <div className="space-y-2 opacity-80">
                    {q.options.map((opt, oIdx) => (
                      <div key={opt.id} className={`px-4 py-2 rounded-lg text-sm flex gap-3 ${opt.id === q.correctOptionId ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 border' : userAns === opt.id ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-800 dark:text-rose-300 border-rose-200 dark:border-rose-800 border' : 'bg-gray-50 dark:bg-slate-900/50 border border-transparent'}`}>
                        <span className="font-bold">{String.fromCharCode(65 + oIdx)}.</span>
-                       <Markdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{opt.contentMarkdown}</Markdown>
+                       <Markdown remarkPlugins={[remarkMath, remarkBreaks]} rehypePlugins={[[rehypeKatex, { strict: false }]]}>{opt.contentMarkdown || ""}</Markdown>
                      </div>
                    ))}
                  </div>
@@ -241,7 +242,7 @@ export function MockTestPlayer() {
                    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700">
                      <div className="text-xs font-bold uppercase tracking-wider text-indigo-500 mb-2">Explanation</div>
                      <div className="prose dark:prose-invert prose-sm">
-                       <Markdown remarkPlugins={[remarkMath, remarkGfm]} rehypePlugins={[rehypeKatex]}>{q.explanationMarkdown}</Markdown>
+                       <Markdown remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]} rehypePlugins={[[rehypeKatex, { strict: false }]]}>{q.explanationMarkdown || ""}</Markdown>
                      </div>
                    </div>
                  )}
@@ -297,7 +298,7 @@ export function MockTestPlayer() {
                   </div>
                   
                   <div className="prose dark:prose-invert prose-lg max-w-none text-gray-900 dark:text-gray-100 mb-8 border-l-4 border-indigo-500 pl-4 py-1 bg-gray-50 dark:bg-slate-800/50">
-                    <Markdown remarkPlugins={[remarkMath, remarkGfm]} rehypePlugins={[rehypeKatex]}>{currentQ.contentMarkdown}</Markdown>
+                    <Markdown remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]} rehypePlugins={[[rehypeKatex, { strict: false }]]}>{currentQ.contentMarkdown || ""}</Markdown>
                   </div>
 
                   <div className="space-y-3">
@@ -310,7 +311,7 @@ export function MockTestPlayer() {
                                {String.fromCharCode(65 + oIdx)}
                             </div>
                             <div className={`prose dark:prose-invert prose-sm flex-1 ${isSelected ? 'text-indigo-900 dark:text-indigo-100' : 'text-gray-700 dark:text-gray-300'}`}>
-                              <Markdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{opt.contentMarkdown}</Markdown>
+                              <Markdown remarkPlugins={[remarkMath, remarkBreaks]} rehypePlugins={[[rehypeKatex, { strict: false }]]}>{opt.contentMarkdown || ""}</Markdown>
                             </div>
                           </div>
                         </button>

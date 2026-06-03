@@ -17,6 +17,7 @@ export interface Job {
 export interface MockTest {
   id: string;
   title: string;
+  categoryId?: string;
   durationMinutes: number;
   totalMarks: number;
   positiveMarks: number;

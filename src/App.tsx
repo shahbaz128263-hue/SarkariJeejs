@@ -26,6 +26,7 @@ function PublicLayout() {
             <Link to="/about-us" className="hover:text-white transition-colors">About Us</Link>
             <Link to="/contact-us" className="hover:text-white transition-colors">Contact Us</Link>
             <Link to="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
+            <Link to="/admin" className="hover:text-indigo-400 text-slate-500 transition-colors">Admin Panel</Link>
           </div>
           <p>
             &copy; {new Date().getFullYear()} SarkariJeeja. All rights reserved.

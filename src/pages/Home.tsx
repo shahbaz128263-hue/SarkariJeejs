@@ -57,17 +57,20 @@ export function Home() {
       const validTests = Array.isArray(fetchedMockTests) ? fetchedMockTests.filter(t => t.published) : [];
       setMockTests(validTests);
 
-      const pseudoJobsFromTests = validTests.map(t => ({
-        id: t.id,
-        title: t.title,
-        category: 'Mock Test',
-        publishDate: t.createdAt || new Date().toISOString(),
-        lastDate: '',
-        contentMarkdown: '',
-        summary: `Mock Test: ${t.totalMarks} Marks | ${t.durationMinutes} Minutes`,
-        shortEligibility: 'Online Exam Mode',
-        totalVacancies: 'N/A'
-      }));
+      const pseudoJobsFromTests = validTests.map(t => {
+        const cat = fetchedCategories.find((c: any) => c.id === t.categoryId);
+        return {
+          id: t.id,
+          title: t.title,
+          category: cat ? cat.name : 'Mock Test',
+          publishDate: t.createdAt || new Date().toISOString(),
+          lastDate: '',
+          contentMarkdown: '',
+          summary: `Mock Test: ${t.totalMarks} Marks | ${t.durationMinutes} Minutes`,
+          shortEligibility: 'Online Exam Mode',
+          totalVacancies: 'N/A'
+        };
+      });
 
       setJobs([...fetchedJobs, ...pseudoJobsFromTests]);
       setCategories(fetchedCategories.length > 0 ? fetchedCategories : [
@@ -132,9 +135,9 @@ export function Home() {
     });
 
     // Helper for recursive category rendering
-    const renderSidebarCategories = (parentId: string | undefined = undefined, depth: number = 0) => {
+    const renderSidebarCategories = (parentId: string | null | undefined = undefined, depth: number = 0) => {
       if (depth > 4) return null; // limit to 4 times inside
-      const children = categories.filter(c => c.parentId === parentId);
+      const children = categories.filter(c => (!c.parentId && !parentId) || c.parentId === parentId);
       if (children.length === 0) return null;
 
       return (
