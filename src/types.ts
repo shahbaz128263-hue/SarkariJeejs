@@ -12,6 +12,7 @@ export interface Job {
   totalVacancies: string;
   featuredImage?: string;
   sourceUrl?: string;
+  isMockTest?: boolean;
 }
 
 export interface MockTest {

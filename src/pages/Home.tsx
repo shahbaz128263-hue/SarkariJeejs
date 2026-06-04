@@ -16,7 +16,7 @@ function CategoryBlock({ title, jobs, colorClass }: { title: string, jobs: Job[]
         <ul className="divide-y divide-gray-100 dark:divide-slate-700">
           {jobs.length > 0 ? jobs.map(job => (
             <li key={job.id}>
-              <Link to={job.category === 'Mock Test' ? `/mock-test/${job.id}` : `/job/${job.id}`} className="px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-indigo-700 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 font-medium text-sm transition-colors md:text-left flex flex-col md:flex-row md:items-center gap-2 justify-between">
+              <Link to={job.isMockTest ? `/mock-test/${job.id}` : `/job/${job.id}`} className="px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-indigo-700 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 font-medium text-sm transition-colors md:text-left flex flex-col md:flex-row md:items-center gap-2 justify-between">
                 <span>{job.title}</span>
                 <div className="flex-shrink-0 self-start md:self-center">
                   {job.lastDate && <JobStatusBadge lastDate={job.lastDate} />}
@@ -63,6 +63,7 @@ export function Home() {
           id: t.id,
           title: t.title,
           category: cat ? cat.name : 'Mock Test',
+          isMockTest: true,
           publishDate: t.createdAt || new Date().toISOString(),
           lastDate: '',
           contentMarkdown: '',
@@ -86,7 +87,9 @@ export function Home() {
   }, []);
 
   const filteredJobs = jobs.filter(j => {
-    const matchesCategory = categoryQuery === 'All' || j.category === categoryQuery;
+    const matchesCategory = categoryQuery === 'All' || 
+                            j.category === categoryQuery || 
+                            (categoryQuery === 'Mock Test' && j.isMockTest);
     const matchesSearch = !searchQuery || 
       j.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
       j.category.toLowerCase().includes(searchQuery.toLowerCase());
@@ -94,6 +97,9 @@ export function Home() {
   });
 
   const getJobsByCategory = (cat: string) => {
+    if (cat === 'Mock Test') {
+      return jobs.filter(j => j.isMockTest).slice(0, 8);
+    }
     return jobs.filter(j => j.category === cat).slice(0, 8); // Top 8 for the blocks
   };
 
@@ -240,7 +246,7 @@ export function Home() {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredJobs.map(job => (
-          <Link key={job.id} to={job.category === 'Mock Test' ? `/mock-test/${job.id}` : `/job/${job.id}`} className="block group">
+          <Link key={job.id} to={job.isMockTest ? `/mock-test/${job.id}` : `/job/${job.id}`} className="block group">
             <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden hover:shadow-lg transition-transform hover:-translate-y-1 duration-200 flex flex-col h-full shadow-sm">
               <div className="p-6 flex-1">
                 <div className="flex justify-between items-start mb-4">
@@ -282,7 +288,7 @@ export function Home() {
               </div>
               <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-100 dark:border-slate-700 mt-auto flex justify-between items-center group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/30 transition-colors">
                 <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400 group-hover:text-indigo-700 dark:group-hover:text-indigo-300">
-                  {job.category === 'Mock Test' ? "Start Exam Now" : "Read Notification"}
+                  {job.isMockTest ? "Start Exam Now" : "Read Notification"}
                 </span>
                 <span className="text-indigo-600 dark:text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
               </div>
