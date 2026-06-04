@@ -353,16 +353,16 @@ export function AdminMockTestBuilder({ testId, onBack }: { testId: string, onBac
                        {bulkPreview.map((q, idx) => (
                          <div key={idx} className="bg-gray-50 dark:bg-slate-900/50 p-4 rounded-lg border border-gray-200 dark:border-slate-700">
                            <div className="font-bold text-sm mb-2 text-gray-900 dark:text-white">
-                             Q {idx + 1}. <span className="inline"><Markdown remarkPlugins={[remarkMath, remarkBreaks]} rehypePlugins={[[rehypeKatex, { strict: false }]]}>{(q.contentMarkdown as string) || ""}</Markdown></span>
+                             Q {idx + 1}. <span className="inline"><Markdown remarkPlugins={[remarkMath, remarkBreaks]} rehypePlugins={[[rehypeKatex, { strict: false }]]}>{((q.contentMarkdown as string) || "").replace(/\\\(/g, '$').replace(/\\\)/g, '$').replace(/\\\[/g, '$$$$').replace(/\\\]/g, '$$$$')}</Markdown></span>
                            </div>
                            <div className="text-sm space-y-1 mb-2 pl-4">
                              {q.options?.map((o, oidx) => (
                                <div key={oidx} className={q.correctOptionId === o.id ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-gray-600 dark:text-gray-400'}>
-                                  {String.fromCharCode(65 + oidx)}. {o.contentMarkdown}
+                                  {String.fromCharCode(65 + oidx)}. <Markdown remarkPlugins={[remarkMath, remarkBreaks]} rehypePlugins={[[rehypeKatex, { strict: false }]]}>{((o.contentMarkdown as string) || "").replace(/\\\(/g, '$').replace(/\\\)/g, '$').replace(/\\\[/g, '$$$$').replace(/\\\]/g, '$$$$')}</Markdown>
                                </div>
                              ))}
                            </div>
-                           {q.explanationMarkdown && <div className="text-xs text-gray-500 dark:text-slate-400 mt-2 p-2 bg-gray-100 dark:bg-slate-800 rounded">Exp: {q.explanationMarkdown}</div>}
+                           {q.explanationMarkdown && <div className="text-xs text-gray-500 dark:text-slate-400 mt-2 p-2 bg-gray-100 dark:bg-slate-800 rounded">Exp: <Markdown remarkPlugins={[remarkMath, remarkBreaks]} rehypePlugins={[[rehypeKatex, { strict: false }]]}>{((q.explanationMarkdown as string) || "").replace(/\\\(/g, '$').replace(/\\\)/g, '$').replace(/\\\[/g, '$$$$').replace(/\\\]/g, '$$$$')}</Markdown></div>}
                          </div>
                        ))}
                      </div>
@@ -403,7 +403,7 @@ export function AdminMockTestBuilder({ testId, onBack }: { testId: string, onBac
                        <div className="flex-1">
                           <div className="font-bold text-sm text-gray-500 dark:text-slate-400 mb-2">Q {idx + 1}.</div>
                           <div className="prose dark:prose-invert prose-sm max-w-none">
-                            <Markdown remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]} rehypePlugins={[[rehypeKatex, { strict: false }]]}>{q.contentMarkdown || ""}</Markdown>
+                            <Markdown remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]} rehypePlugins={[[rehypeKatex, { strict: false }]]}>{(q.contentMarkdown || "").replace(/\\\(/g, '$').replace(/\\\)/g, '$').replace(/\\\[/g, '$$$$').replace(/\\\]/g, '$$$$')}</Markdown>
                           </div>
                        </div>
                        <div className="flex gap-2 shrink-0">
