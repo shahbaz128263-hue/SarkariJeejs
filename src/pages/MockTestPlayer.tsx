@@ -70,8 +70,8 @@ export function MockTestPlayer() {
 
   const displayedQuestions = useMemo(() => {
     if (!test?.isSectionsEnabled) return questions;
-    return questions.filter(q => q.sectionId === currentSectionId);
-  }, [test, questions, currentSectionId]);
+    return questions.filter(q => q.sectionId === currentSectionId || (!q.sectionId && currentSectionId === sections[0]?.id));
+  }, [test, questions, currentSectionId, sections]);
 
   const currentQ = displayedQuestions[currentQIndex];
 

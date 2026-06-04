@@ -97,9 +97,6 @@ export function Home() {
   });
 
   const getJobsByCategory = (cat: string) => {
-    if (cat === 'Mock Test') {
-      return jobs.filter(j => j.isMockTest).slice(0, 8);
-    }
     return jobs.filter(j => j.category === cat).slice(0, 8); // Top 8 for the blocks
   };
 

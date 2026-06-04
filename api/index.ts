@@ -249,7 +249,8 @@ router.delete("/categories/:id", async (req, res) => {
 router.get("/mock-tests", async (req, res) => {
   if (supabase) {
     const { data, error } = await supabase.from('mockTests').select('*').order('createdAt', { ascending: false });
-    if (!error) return res.json(data);
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json(data);
   }
   return res.json(db.mockTests || []);
 });
@@ -257,7 +258,8 @@ router.get("/mock-tests", async (req, res) => {
 router.get("/mock-tests/:id", async (req, res) => {
   if (supabase) {
     const { data, error } = await supabase.from('mockTests').select('*').eq('id', req.params.id).single();
-    if (!error) return res.json(data);
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json(data);
   }
   const test = db.mockTests.find(t => t.id === req.params.id);
   if (!test) return res.status(404).json({ error: "Test not found" });
@@ -269,7 +271,8 @@ router.post("/mock-tests", async (req, res) => {
   const newTest = { id: Math.random().toString(36).substr(2, 6), createdAt: new Date().toISOString(), ...req.body };
   if (supabase) {
     const { data, error } = await supabase.from('mockTests').insert([newTest]).select().single();
-    if (!error) return res.json(data);
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json(data);
   }
   db.mockTests.push(newTest);
   saveDb();
@@ -280,7 +283,8 @@ router.put("/mock-tests/:id", async (req, res) => {
   if (req.headers.authorization !== 'Bearer admin_token_123') return res.status(401).json({ error: "Unauthorized" });
   if (supabase) {
     const { data, error } = await supabase.from('mockTests').update(req.body).eq('id', req.params.id).select().single();
-    if (!error) return res.json(data);
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json(data);
   }
   const idx = db.mockTests.findIndex(t => t.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: "Test not found" });
@@ -315,7 +319,8 @@ router.post("/mock-tests/:id/sections", async (req, res) => {
   const newSection = { id: Math.random().toString(36).substr(2, 6), testId: req.params.id, ...req.body };
   if (supabase) {
     const { data, error } = await supabase.from('mockTestSections').insert([newSection]).select().single();
-    if (!error) return res.json(data);
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json(data);
   }
   db.mockTestSections.push(newSection);
   saveDb();
@@ -326,7 +331,8 @@ router.put("/mock-tests/:id/sections/:sectionId", async (req, res) => {
   if (req.headers.authorization !== 'Bearer admin_token_123') return res.status(401).json({ error: "Unauthorized" });
   if (supabase) {
     const { data, error } = await supabase.from('mockTestSections').update(req.body).eq('id', req.params.sectionId).select().single();
-    if (!error) return res.json(data);
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json(data);
   }
   const idx = db.mockTestSections.findIndex(s => s.id === req.params.sectionId);
   if (idx === -1) return res.status(404).json({ error: "Section not found" });
@@ -339,7 +345,8 @@ router.delete("/mock-tests/:id/sections/:sectionId", async (req, res) => {
   if (req.headers.authorization !== 'Bearer admin_token_123') return res.status(401).json({ error: "Unauthorized" });
   if (supabase) {
     const { error } = await supabase.from('mockTestSections').delete().eq('id', req.params.sectionId);
-    if (!error) return res.json({ success: true });
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ success: true });
   }
   db.mockTestSections = db.mockTestSections.filter(s => s.id !== req.params.sectionId);
   db.mockTestQuestions = db.mockTestQuestions.filter(q => q.sectionId !== req.params.sectionId);
@@ -360,7 +367,8 @@ router.post("/mock-tests/:id/questions", async (req, res) => {
   const newQ = { id: Math.random().toString(36).substr(2, 6), testId: req.params.id, ...req.body };
   if (supabase) {
     const { data, error } = await supabase.from('mockTestQuestions').insert([newQ]).select().single();
-    if (!error) return res.json(data);
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json(data);
   }
   db.mockTestQuestions.push(newQ);
   saveDb();
@@ -371,7 +379,8 @@ router.put("/mock-tests/:id/questions/:questionId", async (req, res) => {
   if (req.headers.authorization !== 'Bearer admin_token_123') return res.status(401).json({ error: "Unauthorized" });
   if (supabase) {
     const { data, error } = await supabase.from('mockTestQuestions').update(req.body).eq('id', req.params.questionId).select().single();
-    if (!error) return res.json(data);
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json(data);
   }
   const idx = db.mockTestQuestions.findIndex(q => q.id === req.params.questionId);
   if (idx === -1) return res.status(404).json({ error: "Question not found" });
@@ -384,7 +393,8 @@ router.delete("/mock-tests/:id/questions/:questionId", async (req, res) => {
   if (req.headers.authorization !== 'Bearer admin_token_123') return res.status(401).json({ error: "Unauthorized" });
   if (supabase) {
     const { error } = await supabase.from('mockTestQuestions').delete().eq('id', req.params.questionId);
-    if (!error) return res.json({ success: true });
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ success: true });
   }
   db.mockTestQuestions = db.mockTestQuestions.filter(q => q.id !== req.params.questionId);
   saveDb();

@@ -140,6 +140,24 @@ export function JobDetail() {
         </div>
       </div>
 
+      {job.category === 'Mock Test' && (
+        <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-6 mb-8 text-center shadow-sm">
+           <h3 className="text-xl font-bold text-emerald-900 dark:text-emerald-400 mb-2">Notice: Mock Test Information</h3>
+           <p className="text-emerald-700 dark:text-emerald-300 mb-4 max-w-2xl mx-auto">
+             This page contains syllabus and notification details for the test. <strong>If you want to take the interactive mock test with timer and scoring, click the button below.</strong>
+           </p>
+           {job.sourceUrl ? (
+              <a href={job.sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-colors ring-4 ring-emerald-600/30">
+                Start External Test
+              </a>
+           ) : (
+             <Link to="/?category=Mock%20Test" className="inline-flex items-center px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-colors ring-4 ring-emerald-600/30">
+               Browse Interactive Mock Tests
+             </Link>
+           )}
+        </div>
+      )}
+
       <AdPlaceholder />
 
       <div className="bg-indigo-50/50 dark:bg-slate-800/80 border border-indigo-100 dark:border-slate-700 rounded-xl p-6 mb-8 shadow-sm">

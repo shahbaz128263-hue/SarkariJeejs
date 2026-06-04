@@ -74,8 +74,9 @@ export function AdminMockTestBuilder({ testId, onBack }: { testId: string, onBac
     } catch {}
   };
 
-  const handleParseBulk = () => {
+    const handleParseBulk = () => {
     const parsed: Partial<MockTestQuestion>[] = [];
+    // Split by Question 1 / Q1 / 1. etc
     const splitRegex = /(?=^(?:###\s*)?(?:Q\s*|Question\s*|प्रश्न\s*|प्र\.\s*)?\d+(?:[.)\]:-]|\s+|$))/im;
     const rawBlocks = bulkText.split(splitRegex).map(b => b.trim()).filter(b => b);
     const blocks = rawBlocks.length > 0 ? rawBlocks : [bulkText.trim()];
@@ -91,20 +92,24 @@ export function AdminMockTestBuilder({ testId, onBack }: { testId: string, onBac
       
       let currentCtx = 'q';
       
+      // Match option indicators like A. A) (A) [A] 1. (1) etc.
+      const optRegex = /^(?:[\(\[]\s*)?(?:\*\*)?[A-Ea-e1-5](?:\*\*)?(?:[\)\]]|\.)\s*/;
+      
       for (const line of lines) {
         if (currentCtx === 'q' && !qText) {
              qText = line.replace(/^(?:###\s*)?(?:Q\s*|Question\s*|प्रश्न\s*|प्र\.\s*)?\d+[.)\]:-]?\s*/i, '');
              continue;
         }
 
-        if (/^(?:\*\*)?[A-Ea-e1-5][.)\]]\s*/.test(line)) {
+        if (optRegex.test(line)) {
           currentCtx = 'opt';
-          options.push({ id: (options.length + 1).toString(), contentMarkdown: line.replace(/^(?:\*\*)?[A-Ea-e1-5][.)\]]\s*/, '').replace(/\*\*$/, '') });
+          const cleanOpt = line.replace(optRegex, '').replace(/\*\*$/, '').trim();
+          options.push({ id: (options.length + 1).toString(), contentMarkdown: cleanOpt });
         } else if (/^(?:\*\*)?(?:Ans|Answer|Correct|उत्तर|सही उत्तर)\s*(?:\*\*)?\s*[:=]?/i.test(line)) {
           currentCtx = 'ans';
           const cleanLine = line.replace(/\*\*/g, '');
           const rawAns = cleanLine.replace(/^(?:Ans|Answer|Correct|उत्तर|सही उत्तर)\s*[:=]?\s*/i, '').trim();
-          const match = rawAns.match(/^[A-Da-d1-4]/);
+          const match = rawAns.match(/^[A-Ea-e1-5]/);
           if (match) {
              answer = match[0].toUpperCase();
           } else {
@@ -123,20 +128,22 @@ export function AdminMockTestBuilder({ testId, onBack }: { testId: string, onBac
         }
       }
       
-      if (options.length > 0) {
+      // We need exactly 4 options by default. We can accept if it has at least 2.
+      if (options.length >= 2) {
          let correctOptionId = '1';
          if (answer) {
              const charCode = answer.charCodeAt(0);
-             if (charCode >= 65 && charCode <= 68) {
+             if (charCode >= 65 && charCode <= 69) { // A to E (if they provide 5 options)
                 correctOptionId = (charCode - 64).toString();
-             } else if (charCode >= 49 && charCode <= 52) {
+             } else if (charCode >= 49 && charCode <= 53) { // 1 to 5
                 correctOptionId = answer;
              }
          }
          
          parsed.push({
            contentMarkdown: qText,
-           options: options.slice(0, 4),
+           options: options.slice(0, 4), // keep up to 4 for UI consistency, or let it map all? Our Player maps all! 
+           // Wait, schema enforces options array. Let player map all. We'll slice 4.
            correctOptionId,
            explanationMarkdown: explanation
          });
@@ -147,32 +154,46 @@ export function AdminMockTestBuilder({ testId, onBack }: { testId: string, onBac
   };
 
   const handleImportParsed = async () => {
+    if (test.isSectionsEnabled && !qForm.sectionId) {
+       alert("Please select a Target Section for these questions!");
+       return;
+    }
     setIsImporting(true);
+    let successCount = 0;
     try {
       let currentOrder = questions.length;
       for (const q of bulkPreview) {
         currentOrder++;
-        const payload = { ...q, type: 'MCQ', testId, order: currentOrder };
-        await fetch(`/api/mock-tests/${testId}/questions`, {
+        const payload = { ...q, type: 'MCQ', testId, order: currentOrder, sectionId: qForm.sectionId || undefined };
+        const res = await fetch(`/api/mock-tests/${testId}/questions`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
           body: JSON.stringify(payload)
         });
+        if (!res.ok) {
+           const err = await res.json();
+           throw new Error(err.error || 'Failed to insert question');
+        }
+        successCount++;
       }
       await fetchTestData();
       setIsBulkImport(false);
       setBulkText("");
       setBulkPreview([]);
-      alert(`Imported ${bulkPreview.length} questions successfully!`);
-    } catch (e) {
+      alert(`Imported ${successCount} questions successfully!`);
+    } catch (e: any) {
       console.error(e);
-      alert('Error importing questions.');
+      alert(`Error importing questions after ${successCount} inserts: ${e.message}`);
     } finally {
       setIsImporting(false);
     }
   };
 
   const handleSaveQuestion = async () => {
+    if (test.isSectionsEnabled && !qForm.sectionId) {
+       alert("Please select a Target Section for this question!");
+       return;
+    }
     try {
       const isNew = !qForm.id;
       const url = isNew ? `/api/mock-tests/${testId}/questions` : `/api/mock-tests/${testId}/questions/${qForm.id}`;
@@ -189,8 +210,13 @@ export function AdminMockTestBuilder({ testId, onBack }: { testId: string, onBac
       if (res.ok) {
         setIsAddingQ(false);
         fetchTestData();
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Failed to save question');
       }
-    } catch {}
+    } catch {
+       alert('Network error saving question.');
+    }
   };
 
   const handleDeleteQ = async (id: string) => {
@@ -301,6 +327,15 @@ export function AdminMockTestBuilder({ testId, onBack }: { testId: string, onBac
               </p>
               
               <div className="space-y-6">
+                 {test.isSectionsEnabled && sections.length > 0 && (
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Target Section</label>
+                     <select value={qForm.sectionId || ''} onChange={e => setQForm({...qForm, sectionId: e.target.value})} className="w-full rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none" required>
+                       <option value="">Select Section (Required)</option>
+                       {sections.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
+                     </select>
+                   </div>
+                 )}
                  <textarea rows={8} value={bulkText} onChange={(e) => setBulkText(e.target.value)} className="w-full rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-3 text-sm text-gray-900 dark:text-gray-100 font-mono focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Paste questions here..." />
                  <div className="flex justify-between">
                     <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">
@@ -389,6 +424,15 @@ export function AdminMockTestBuilder({ testId, onBack }: { testId: string, onBac
               </div>
               
               <div className="space-y-6">
+                 {test.isSectionsEnabled && sections.length > 0 && (
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Target Section</label>
+                     <select value={qForm.sectionId || ''} onChange={e => setQForm({...qForm, sectionId: e.target.value})} className="w-full rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none" required>
+                       <option value="">Select Section (Required)</option>
+                       {sections.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
+                     </select>
+                   </div>
+                 )}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex justify-between">
                     Question Content (Markdown)
