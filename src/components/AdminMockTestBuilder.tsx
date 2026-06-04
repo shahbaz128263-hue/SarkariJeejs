@@ -11,10 +11,23 @@ import 'katex/dist/katex.min.css';
 export const formatMarkdown = (text: string | undefined, isOption: boolean = false) => {
   if (!text) return "";
   let t = String(text).replace(/\\\(/g, '$').replace(/\\\)/g, '$').replace(/\\\[/g, '$$$$').replace(/\\\]/g, '$$$$');
+  
   if (isOption && !t.includes('$') && (t.includes('\\text') || t.includes('\\cdot') || t.includes('_') || t.includes('\\frac') || t.includes('^') || t.includes('\\mu'))) {
     return `$${t}$`;
   }
-  return t;
+
+  const parts = t.split('$');
+  for (let i = 0; i < parts.length; i += 2) {
+      if (!parts[i]) continue;
+      parts[i] = parts[i].replace(/(\\text\{[^}]+\}_[a-zA-Z0-9]+\s*\\cdot\s*[0-9]*\\text\{[^}]+\}_[a-zA-Z0-9]+\\text\{[^}]+\}|\\text\{[^}]+\}_[a-zA-Z0-9]+\s*\\cdot\s*[0-9]*\\text\{[^}]+\}_[a-zA-Z0-9]+|\\text\{[^}]+\}_[a-zA-Z0-9]+\\text\{[^}]+\}|\\text\{[^}]+\}_[a-zA-Z0-9]+|\\frac\{[^}]+\}\{[^}]+\}|[A-Z][a-z]?_[0-9]+(?:[A-Z][a-z]?(?:_[0-9]+)?)*|\s+\\cdot\s+)/g, (match) => {
+          let trimmed = match.trim();
+          if (!trimmed) return match;
+          let prefix = match.match(/^\s+/) ? match.match(/^\s+/)?.[0] : '';
+          let suffix = match.match(/\s+$/) ? match.match(/\s+$/)?.[0] : '';
+          return `${prefix}$${trimmed}$${suffix}`;
+      });
+  }
+  return parts.join('$');
 };
 
 export function AdminMockTestBuilder({ testId, onBack }: { testId: string, onBack: () => void }) {
