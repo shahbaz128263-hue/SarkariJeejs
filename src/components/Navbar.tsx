@@ -156,7 +156,7 @@ export function Navbar() {
           
           {(function renderMobileCategories(parentId: string | undefined = undefined, depth: number = 0): React.ReactNode {
             if (depth > 4) return null;
-            const children = categories.filter(c => c.parentId === parentId && c.cat !== null);
+            const children = categories.filter(c => ((!c.parentId && !parentId) || c.parentId === parentId) && c.cat !== null);
             if (children.length === 0) return null;
 
             return (

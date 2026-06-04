@@ -32,7 +32,7 @@ export function AdminMockTests() {
       positiveMarks: 1,
       negativeMarks: 0.25,
       isSectionsEnabled: false,
-      published: false
+      published: true
     };
     try {
       const res = await fetch('/api/mock-tests', {
