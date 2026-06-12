@@ -49,14 +49,14 @@ export function Navbar() {
   const closeDrawer = () => setIsDrawerOpen(false);
 
   return (
-    <header className="w-full">
+    <header className="w-full relative overflow-x-hidden">
       {/* Top Header - Modern Deep Indigo */}
       <div className="bg-indigo-900 text-white py-6 px-4 text-center relative shadow-md">
         <Link to="/" className="inline-block hover:opacity-90 transition-opacity">
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight font-brand" style={{ letterSpacing: '-0.02em' }}>
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tight font-brand" style={{ letterSpacing: '-0.02em' }}>
             Sarkari<span className="text-blue-400 font-display italic">Jeeja</span>
           </h1>
-          <p className="text-sm md:text-base mt-2 font-medium text-indigo-200 tracking-[0.15em] uppercase font-sans">
+          <p className="text-xs sm:text-sm md:text-base mt-2 font-medium text-indigo-200 tracking-[0.15em] uppercase font-sans">
             Next Generation Job Portal
           </p>
         </Link>

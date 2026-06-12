@@ -15,9 +15,9 @@ import { MockTestPlayer } from './pages/MockTestPlayer';
 
 function PublicLayout() {
   return (
-    <div className="min-h-screen bg-[#f3f3f3] dark:bg-slate-900 flex flex-col font-sans transition-colors">
+    <div className="relative min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-[#f3f3f3] dark:bg-slate-900 flex flex-col font-sans transition-colors">
       <Navbar />
-      <main className="flex-1 w-full max-w-7xl mx-auto min-w-0 overflow-x-clip bg-white dark:bg-slate-800 shadow-xl min-h-screen mt-2 mb-8 p-4 sm:p-6 lg:p-8">
+      <main className="flex-1 w-full max-w-7xl mx-auto min-w-0 bg-white dark:bg-slate-800 shadow-xl min-h-screen mt-2 mb-8 p-4 sm:p-6 lg:p-8">
         <Outlet />
       </main>
       <footer className="bg-slate-900 dark:bg-black text-slate-400 mt-auto">

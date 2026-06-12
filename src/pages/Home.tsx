@@ -178,7 +178,7 @@ export function Home() {
         }) }} />
         {/* Important Updates Marquee */}
         {jobs.length > 0 && (
-          <div className="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md p-2 mb-6 flex overflow-hidden whitespace-nowrap items-center">
+          <div className="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md p-2 mb-6 flex w-full min-w-0 overflow-hidden whitespace-nowrap items-center">
             <span className="bg-rose-600 text-white font-bold px-3 py-1 rounded text-sm mr-4 shrink-0 shadow-sm z-10 relative">Trending</span>
             <div className="animate-[marquee_25s_linear_infinite] flex items-center gap-8">
               {jobs.slice(0, 5).map(job => (
@@ -255,11 +255,11 @@ export function Home() {
                   </span>
                 </div>
                 
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors mb-3 leading-tight">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors mb-3 leading-tight break-words">
                   {job.title}
                 </h3>
                 
-                <p className="text-gray-600 dark:text-slate-300 text-sm mb-6 line-clamp-3">
+                <p className="text-gray-600 dark:text-slate-300 text-sm mb-6 line-clamp-3 break-words">
                   {job.summary}
                 </p>
 
