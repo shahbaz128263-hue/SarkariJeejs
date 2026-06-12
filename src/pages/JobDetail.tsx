@@ -180,7 +180,7 @@ export function JobDetail() {
           components={{
             table: ({ node, ...props }) => (
               <div className="overflow-x-auto w-full my-6 rounded-lg border border-gray-200 dark:border-slate-700">
-                <table className="!m-0 !border-0" {...props} />
+                <table className="min-w-full !m-0 !border-0" {...props} />
               </div>
             )
           }}

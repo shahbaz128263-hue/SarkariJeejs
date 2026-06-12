@@ -3,6 +3,8 @@ import { Loader2, PlusCircle, Lock, LogOut, LayoutDashboard, FileText, Settings,
 import { Link } from 'react-router-dom';
 import { AdminMockTests } from '../components/AdminMockTests';
 
+import { AdminProfileSettings } from '../components/AdminProfileSettings';
+
 export function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
@@ -356,6 +358,17 @@ export function Admin() {
           >
             <Grid className="w-5 h-5" />
             Categories
+          </button>
+          <button
+            onClick={() => { setActiveTab('settings'); setIsMobileMenuOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === 'settings' 
+                ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' 
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700'
+            }`}
+          >
+            <Settings className="w-5 h-5" />
+            Profile Settings
           </button>
         </nav>
         <div className="p-4 border-t border-gray-200 dark:border-slate-700">
@@ -754,6 +767,10 @@ export function Admin() {
                  </div>
               </div>
             </div>
+          )}
+
+          {activeTab === 'settings' && (
+            <AdminProfileSettings />
           )}
           </div>
         </div>

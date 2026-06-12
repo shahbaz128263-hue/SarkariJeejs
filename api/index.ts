@@ -69,7 +69,8 @@ let db: {
   categories: { id: string, name: string, parentId?: string }[],
   mockTests: MockTest[],
   mockTestSections: MockTestSection[],
-  mockTestQuestions: MockTestQuestion[]
+  mockTestQuestions: MockTestQuestion[],
+  settings: { adminUsername?: string, adminPassword?: string }
 } = { 
   jobs: [], 
   categories: [
@@ -84,7 +85,11 @@ let db: {
   ],
   mockTests: [],
   mockTestSections: [],
-  mockTestQuestions: []
+  mockTestQuestions: [],
+  settings: {
+    adminUsername: 'admin',
+    adminPassword: process.env.ADMIN_PASSWORD || 'admin@123'
+  }
 };
 
 const saveDb = () => {
@@ -109,6 +114,13 @@ const initDb = () => {
       if (!db.mockTests) db.mockTests = [];
       if (!db.mockTestSections) db.mockTestSections = [];
       if (!db.mockTestQuestions) db.mockTestQuestions = [];
+      if (!db.settings) {
+        db.settings = {
+          adminUsername: 'admin',
+          adminPassword: process.env.ADMIN_PASSWORD || 'admin@123'
+        };
+      }
+
       
       if (!db.categories) {
         db.categories = [
@@ -403,12 +415,27 @@ router.delete("/mock-tests/:id/questions/:questionId", async (req, res) => {
 
 router.post("/auth/login", (req, res) => {
   const { password } = req.body;
-  const adminPassword = process.env.ADMIN_PASSWORD || "admin@123";
+  const adminPassword = db.settings?.adminPassword || process.env.ADMIN_PASSWORD || "admin@123";
   if (password === adminPassword) {
     res.json({ success: true, token: "admin_token_123" });
   } else {
     res.status(401).json({ error: "Invalid password" });
   }
+});
+
+router.get("/settings", (req, res) => {
+  if (req.headers.authorization !== 'Bearer admin_token_123') return res.status(401).json({ error: "Unauthorized" });
+  res.json({ adminUsername: db.settings?.adminUsername || 'admin' });
+});
+
+router.put("/settings", (req, res) => {
+  if (req.headers.authorization !== 'Bearer admin_token_123') return res.status(401).json({ error: "Unauthorized" });
+  const { adminUsername, adminPassword } = req.body;
+  if (!db.settings) db.settings = {};
+  if (adminUsername) db.settings.adminUsername = adminUsername;
+  if (adminPassword) db.settings.adminPassword = adminPassword;
+  saveDb();
+  res.json({ success: true, adminUsername: db.settings.adminUsername });
 });
 
 router.post("/jobs/generate", async (req, res) => {
