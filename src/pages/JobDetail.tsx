@@ -110,10 +110,10 @@ export function JobDetail() {
         <meta property="og:description" content={pageDescription} />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
+        <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
+        <script type="application/ld+json">{JSON.stringify(faqData)}</script>
       </Helmet>
       
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqData) }} />
       <Link to="/" className="inline-flex items-center text-sm font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 px-4 py-2 rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-900/50 mb-6 transition-colors">
         <ArrowLeft className="h-4 w-4 mr-2" />
         Back to Jobs
@@ -187,6 +187,24 @@ export function JobDetail() {
         >
           {job.contentMarkdown}
         </Markdown>
+      </div>
+
+      <div className="mt-12 mb-8 relative z-10 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-6 shadow-sm">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Frequently Asked Questions (FAQ)</h2>
+        <div className="space-y-4">
+          <div className="border-b border-gray-200 dark:border-slate-700 pb-4">
+            <h3 className="font-semibold text-lg text-indigo-700 dark:text-indigo-400 mb-2">What is the last date to apply for {job.title}?</h3>
+            <p className="text-gray-700 dark:text-gray-300">{job.lastDate ? `The last date to apply is ${job.lastDate}.` : `The last date to apply is not specified. Please refer to the official notification.`}</p>
+          </div>
+          <div className="border-b border-gray-200 dark:border-slate-700 pb-4">
+            <h3 className="font-semibold text-lg text-indigo-700 dark:text-indigo-400 mb-2">How many vacancies are available for {job.title}?</h3>
+            <p className="text-gray-700 dark:text-gray-300">{job.totalVacancies ? `There are a total of ${job.totalVacancies} vacancies available.` : `The number of vacancies is not clearly specified.`}</p>
+          </div>
+          <div className="pb-2">
+            <h3 className="font-semibold text-lg text-indigo-700 dark:text-indigo-400 mb-2">What is the eligibility criteria for {job.title}?</h3>
+            <p className="text-gray-700 dark:text-gray-300">{job.shortEligibility || `Please refer to the official notification for detailed eligibility criteria.`}</p>
+          </div>
+        </div>
       </div>
 
       <RelatedJobs category={job.category} currentJobId={job.id} />
